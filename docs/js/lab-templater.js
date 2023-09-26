@@ -13,6 +13,7 @@ const lab_title = "RL78/G23 IAQ Promotion Board Series - WiFi Connectivity";
 */
 const pages_in_lab = [
     "index.html", "Home",
+    "0-Adafruit-Creation.html","0. Adafruit Signup",
     "1-Project-Creation.html", "1. Project Creation",
     "2-Configuration.html", "2. Project Configuration",
     "3-Source-Code.html", "3. Source Code",

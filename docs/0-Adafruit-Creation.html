@@ -1,0 +1,115 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<!-- Useful for tablet and mobile based browsing-->
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<!-- Title of the page (not necessarily the lab) - for reference only, not displayed on the page-->
+	<title>Project Creation</title>
+	<!-- CSS template stylesheet must be linked here-->
+	<link href="css/renesas_layout_style.css" rel="stylesheet" type="text/css">
+	<!-- Javascript based lab templating helper must be placed here-->
+	<script type="text/javascript" src="js/lab-templater.js"></script>
+</head>
+
+<body>
+	<!-- Populate the page header (banner, title & navigation menu)-->
+	<script>lab_templater.Generate_header();</script>
+
+	<!-- Begin the main content of the page-->
+	<div class="main-content">
+
+		<!-- Page/Section Summary & Description-->
+		<summary>0. Adafruit Signup</summary>
+		<p>Before proceeding to work on e2 studio, let's creat Adafruit account to make sure that your front-end dashboard is ready. If you already have an account you can skip the</p>
+		<!-- Start adding "details" sections for lab steps-->
+		<details open>
+			<summary>0.1 Sign-up page</summary>
+			<p>
+				This is an easy step!If you have an adafruit account please skip this step. If you don't have an account click the following link to go to the signup. Fill in your details and create an account and get started!<br>
+				<b>
+					<a target="_blank" href="https://accounts.adafruit.com/users/sign_up">Adafruit Sign-up page</a>
+				</b>
+			</p>
+		</details>
+
+		<details>
+			<summary>0.2 Create Dashboard</summary>
+			<p>
+				Adafruit provide a front end Dashboard to display the data online in real time.<br>
+				It is a cloud server that can be used to connect to devices through wifi and also to control these devices through it's dashboard. A Dashboard will act as a medium to display the values of the feeds/sensor values that you are sending<br><br />
+				Here we will select Dashboard from the top bar and that will display all of the information regarding dashboards that you have created. Now, you can click on the New Dashboard Button anf fill in the Dashboard name as per your liking and the then click on create once done.
+			</p>
+			<img class="modal-thumbnails" src="img/img_lab/dash_create.gif" alt="">
+			<p> The list should now display the generated dashboard. If you click on it you can see the live version of the dashboard at the moment it should be blank which we will populate in later steps.</p>
+		</details>
+
+		<details>
+			<summary>0.3 Adding Feeds</summary>
+			<p>
+				Now that the dashboard is created , let's start ,creating feeds to populate it. Feeds are basically the name of the sensor value that we are sending from the IAQ board.<br>
+				Let's Start with Temperature feed. To do that find feeds from the top bar that will take you to the adafruit feeds tab. Now click on create New Feed button, this will show you a New Feed's menue.
+				<br>Name: Temperature
+			</p>
+			<img class="modal-thumbnails" src="img/img_lab/Temp_feed_create.gif" alt="">
+			<p>
+				Next let's add Humidity feed using the same new feed button.<br>
+				Name: Humidity
+			</p>
+			<img class="modal-thumbnails" src="img/img_lab/Hum_feed_create.gif" alt="">
+			<p>Both the added feeds should now be created. You can click the link to see the information of the respective feed. Using the same steps create two fields as led and buzzer</p>
+		</details>
+
+		<details>
+			<summary>0.4 Link Feeds To The Dashboard</summary>
+			<p>
+				Once the feed and the dashboard is create now it's time to create a circular meter for Trmperature and Humidity that links to the created respective feeds. Navigate to the dashboard tab and select the dashboard created in previous steps. Click the settings button and then select Create new block.
+				This will open up a menue with all of the options of that you can add to the dashboard, select gauge. Finally, you can link the feeds by selecting the name of the feed lets choose Temperature first. Add the following information in the gauge settings:
+			</p>
+			<ol>
+				<li>Block Title: Temperature</li>
+				<li>Gauge Min Value: 0 (This indicates the minimum value of the Temperature)</li>
+				<li>Gauge Max Value: 70 (This indicates the maximum value of the Temperature)</li>
+				<li>Gauge Label: C (Indicating Celcius)</li>
+				<li>High Warning Value: 30 (Once this value is crossed, the dial will change colour and will even send a alert once set)</li>
+			</ol>
+			<p>
+				Then click <b>Create block </b> This can be seen as below.
+			</p>
+			<img class="modal-thumbnails" src="img/img_lab/Temp_feed_link.gif" alt="">
+			<p>
+				Now let's follow the same steps as above and choose the feed as Humidity. Add the following information in the gauge settings:
+			</p>
+			<ol>
+				<li>Block Title: Humidity</li>
+				<li>Gauge Min Value: 0 (This indicates the minimum value of the Humidity)</li>
+				<li>Gauge Max Value: 100 (This indicates the maximum value of the Humidity)</li>
+				<li>Gauge Label: % (Indicating Percentage)</li>
+				<li>High Warning Value: 45 (Once this value is crossed, the dial will change colour and will even send a alert once set)</li>
+			</ol>
+			<p>
+				Then click <b>Create block</b> The outcome will be like below.
+			</p>
+			<img class="modal-thumbnails" src="img/img_lab/Hum_feed_link.gif" alt="">
+			<p>
+				Finally, create two other buttons for led and buzzer.
+			</p>
+		</details>
+		<details>
+			<summary>0.5 Edit The Dashboard (OPTIONAL)</summary>
+			<p>
+				This is just an optional step if you want to edit the way your dashboard look. To do this, click on the same settings button and now select Edit Layout which will display setting symbol on top left corner of the block now simply drag the block to align them.
+				You can even adjust the size of the block by placing the mouse on bottom left corner of the block and dragging the corner. Once Satisfied click on Save Layout.<br>
+			</p>
+			<img class="modal-thumbnails" src="img/img_lab/Edit_Layout.gif" alt="">
+		</details>
+		<!-- Prepare the pages modal images-->
+		<script>lab_templater.Prepare_modal();</script>
+
+		<!-- Button for going to the next page-->
+		<script>lab_templater.Generate_next_page_button("Next...");</script>
+	</div>
+</body>
+
+</html>

@@ -172,10 +172,14 @@
 					These are the LED control pins.
 				</li>
 				<li>
+					<b>PORT6 tab:</b> Set the following to <b>Output current</b> &amp; <b>Hi-Z initial output</b>;
+					<i>P62</i><br>
+				</li>
+				<li>
 					<b>PORT7 tab:</b> Set the following to <b>Out</b>  &amp; <b>initial output 1</b>;
 					<i>P70</i><br>
 				</li>
-				<li><b>PORT14 tab:</b> Set the following to <b>Out</b>; <i>P146</i>,<i>P147</i><br></li>
+				<li><b>PORT14 tab:</b> Set the following to <b>Out</b> &amp; <b>initial output 1</b>; <i>P146</i>,<b>Out</b>; <i>P147</i> <br></li>
 			</ol>
 			<img class="modal-thumbnails" src="img/img_lab/portp2.gif" alt="">
 		</details>
@@ -255,7 +259,74 @@
 		</details>
 
 		<details>
-			<summary>2.11 Generate Code</summary>
+			<summary>2.11 Data Transfer Control</summary>
+			<p>
+				So far we have added sensors, DA16200 connection and assigned ports. Now lets add components to use the display. the first thing we are adding is data transfer control component.
+				Under the activation source settings section uncheck Control data0 (DTCD0) and check Control data1 (DTCD1). and in the dropdown at the end select <b>UART0 transmission transferend/CSI00 transfer end or buffer empty/IIC00 transfer end.</b><br>
+			</p>
+			<ol>
+				<li><b> Control data0 (DTCD0):</b> <i>Unchecked</i></li>
+				<li><b>Control data1 (DTCD1):</b> <i>Checked</i><i>UART0 transmission transferend/CSI00 transfer end or buffer empty/IIC00 transfer end</i></li>
+			</ol>
+			<p>
+				Now, let's edit the DTC data setting now to the following:
+			</p>
+			<ol>
+				<li><b>Transfer mode setting:</b> <i>Normal mode</i></li>
+				<li><b>Transfer data size setting:</b> <i>8 bit</i></li>
+				<li><b>Transfer soure address:</b> <i>0x0000</i><i>Address incremented</i></li>
+			</ol>
+			<img class="modal-thumbnails" src="img/img_lab/DTC.gif" alt="">
+		</details>
+
+		<details>
+			<summary>2.12 SPI </summary>
+			<p>
+				The final piece of the display is the SPI interface. This will help in sending the data to the display embedded on the IAQ board. To add this please do the following:
+			</p>
+			<ol>
+				<li>Add the <i>SPI (CSI) Communication</i> component</li>
+				<li><b>Configuration name::</b> <i>CSI00</i></li>
+				<li><b>Operation:</b> <i>Transmission</i></li>
+				<li><b>Resource:</b> <i>CSI00</i></li>
+			</ol>
+			<img class="modal-thumbnails" src="img/img_lab/add_SPI.gif" alt="">
+			<p>Configure the component using the following guidelines:</p>
+			<ol>
+				<li><b>Transfer clock mode:</b> <i>Internal clock(master)</i></li>
+				<li><b>Operation clock:</b> <i>CK00</i></li>
+				<li><b>Clock source:</b> <i>fCLK</i></li>
+				<li><b>Transfer mode setting:</b> <i>Single transfer mode</i></li>
+				<li><b>Data length setting:</b> <i>8 bit</i></li>
+				<li><b>Transfer direction setting:</b> <i>MSB</i></li>
+				<li><b>Specification of data timing:</b> <i>Type 4</i></li>
+				<li><b>Baudrate:</b> <i>8000000</i></li>
+				<li><b>Transfer interrupt priority (INTCSI00):</b> <i>Level 1</i></li>
+				<li><b>Callback function setting:</b> <i>Transmission end</i></li>
+			</ol>
+			<img class="modal-thumbnails" src="img/img_lab/SPI.gif" alt="">
+		</details>
+
+		<details>
+			<summary>2.13 Buzzer </summary>
+			<p>
+				The display is now successfully added! Let add the last part of the project which is the buzzer.
+			</p>
+			<ol>
+				<li>Add the <i>Clock Output/Buzzer Output Controller </i> component</li>
+				<li><b>Configuration name::</b> <i>Config_PCLBUZ1</i></li>
+				<li><b>Resource:</b> <i>PCLBUZ1</i></li>
+			</ol>
+			<img class="modal-thumbnails" src="img/img_lab/add_Buzzer.gif" alt="">
+			<p>This buzzer would need a output clock frequency:</p>
+			<ol>
+				<li><b>Output clock:</b> <i>fSXP/2^5</i></li>
+			</ol>
+			<img class="modal-thumbnails" src="img/img_lab/Buzzer.gif" alt="">
+		</details>
+
+		<details>
+			<summary>2.14 Generate Code</summary>
 			<p>Now click Generate Code.</p>
 			<img class="modal-thumbnails" src="img/img_lab/generate.gif" alt="">
 			<p>

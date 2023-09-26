@@ -53,19 +53,23 @@
 					<li>
 						Locate the include directory in the project and left click on it to see an <b>C/C++ Project Settings</b> or use Ctrl+Alt+P.
 					</li>
-					<img class="modal-thumbnails" src="img/img_lab/locateinclude.gif" alt=""><br>
+					<img class="modal-thumbnails" src="img/img_lab/locateinclude.gif" alt="">
+					<br>
 					<li>
 						Select Settings->Tool Settings->Compiler->Source.
 					</li>
-					<img class="modal-thumbnails" src="img/img_lab/locatesourceinclude.PNG" alt=""><br>
+					<img class="modal-thumbnails" src="img/img_lab/locatesourceinclude.PNG" alt="">
+					<br>
 					<li>
 						click on add icon and Select workspace that will take you to the folders of the current workspace now select project folder->src->app folder which we want to include. Finally check on Add subdirectories and press ok.
 					</li>
-					<img class="modal-thumbnails" src="img/img_lab/include.gif" alt=""><br>
+					<img class="modal-thumbnails" src="img/img_lab/include.gif" alt="">
+					<br>
 					<li>
 						Hit Apply and you should see the files added in the includes folder as follows
 					</li>
-					<img class="modal-thumbnails" src="img/img_lab/includes_final.PNG" alt=""><br>
+					<img class="modal-thumbnails" src="img/img_lab/includes_final.PNG" alt="">
+					<br>
 				</ol>
 			</p>
 		</details>
@@ -112,13 +116,13 @@
 			<p>
 				<b>Function:</b>  r_Config_UARTA0_callback_sendend
 				<pre>
-					<code class="C">Hal_uart_tx_done_callback();</code>
+				<code class="C">Hal_uart_tx_done_callback();</code>
 				</pre>
 			</p>
 			<p>
 				<b>Function:</b> r_Config_UARTA0_callback_receiveend
 				<pre>
-					<code class="C">Hal_uart_rx_done_callback();</code>
+				<code class="C">Hal_uart_rx_done_callback();</code>
 				</pre>
 			</p>
 			<p>Which should look like this:</p>
@@ -189,165 +193,370 @@ R_Config_TAU0_0_Stop();</code>
 			<img class="modal-thumbnails" src="img/img_lab/tau05src.png" alt="">
 		</details>
 		<details>
+			<summary>3.5 Populate SPI Driver</summary>
+			<p>
+				This is meant for display and to customise the SPI configuaration to work for the on board display.<br><br>
+				Navigate to the <b>[src] &rarr; [smc_gen] &rarr; [Config_CSI00] &rarr; Config_CSI00_user.c</b> &amp;
+				copy the code, inside the "Start user code for function..."
+				comment gaurd.
+				<br>
+				<b>Function:r_Config_CSI00_callback_sendend</b>
+			</p>
+			<pre><code class="C">tx_done = true;</code></pre
+			<p>This should look as follows</p>
+			<img class="modal-thumbnails" src="img/img_lab/SPI_user_p1.png" alt="">
+			<p>
+				Next navigate to the end of the file and please add the following code at the bottom,
+				again within the comment gaurd "Start user code for adding...".
+			</p>
+			<pre><code class="C">void R_Config_CSI00_Start_app(void)
+{
+	SO0 &= (uint16_t)~_0100_SAU_CH0_CLOCK_OUTPUT_1;    /* CSI00 clock initial level */
+	SO0 &= (uint16_t)~_0001_SAU_CH0_DATA_OUTPUT_1;    /* CSI00 SO initial level */
+	SOE0 |= _0001_SAU_CH0_OUTPUT_ENABLE;    /* enable CSI00 output */
+	SS0 |= _0001_SAU_CH0_START_TRG_ON;    /* enable CSI00 */
+	CSIIF00 = 0U;    /* clear INTCSI00 interrupt flag */
+	CSIMK00 = 1U;    /* disable INTCSI00 interrupt */
+	g_csi00_tx_count = 0U; /* Force the spi tx end callback to trigger on dtc completion*/
+}
+/* END OF FUNCTION*/
+
+void R_Config_CSI00_Send_app(const uint8_t * const tx_buf, uint16_t tx_num)
+{
+	const uint8_t * l_tx_buf = tx_buf;
+	uint16_t l_tx_num = tx_num;
+	uint16_t bytes_to_send = 0U;
+
+	/* Wait for previous transmission to complete*/
+	while(!tx_done)
+	{
+		NOP();
+	}
+
+	CSIMK00 = 0U;    /* enable INTCSI00 interrupt */
+
+	do
+	{
+		tx_done = false;
+
+		bytes_to_send = (l_tx_num > 255U) ? 256U : l_tx_num;
+		l_tx_num = (l_tx_num > 255U) ? (l_tx_num-256U) : 0U;
+
+		/* Two bytes or less don't use DTC*/
+		if(bytes_to_send < 3U)
+		{
+			Simple_polling_send(l_tx_buf, bytes_to_send);
+		}
+		else
+		{
+			Start_dtc1(l_tx_buf+1, (__near uint8_t *)&SIO00, bytes_to_send-1U); /* Setup the DTC*/
+			SIO00 = *l_tx_buf;    /* Trigger SPI transmission */
+			l_tx_buf += bytes_to_send; /* Move the buffer pointer forward*/
+		}
+
+		/* Wait for transmission to complete*/
+		while(!tx_done)
+		{
+			HALT();
+		}
+	}while(l_tx_num > 0U);
+
+	CSIMK00 = 1U;    /* disable INTCSI00 interrupt */
+}
+/* END OF FUNCTION*/
+
+static void Simple_polling_send(const uint8_t * const tx_buf, uint16_t tx_num)
+{
+	uint16_t l_tx_num = tx_num;
+	const uint8_t * l_tx_buf = tx_buf;
+
+	CSIMK00 = 1U;    /* disable INTCSI00 interrupt */
+	CSIIF00 = 0U;    /* clear INTCSI00 interrupt flag */
+
+	tx_done = false;
+
+	while(l_tx_num > 0U)
+	{
+		SIO00 = *l_tx_buf;
+
+		l_tx_num--;
+		l_tx_buf++;
+
+		/* Wait for the interrupt flag to set*/
+		while(0U == CSIIF00)
+		{
+			NOP();
+		}
+
+		CSIIF00 = 0U;
+	}
+
+	tx_done = true;
+}
+/* END OF FUNCTION*/</code></pre>
+			<p>The changes should look like this when finished(In order to fit in the screen, the loops are minimised):</p>
+			<img class="modal-thumbnails" src="img/img_lab/SPI_user_p2.png" alt="">
+		</details>
+		<details>
 			<summary>3.5 Pull In The Main Code</summary>
 			<p>
 				Now lets copy in the main code - this is running the application.<br>
 				Simply <b>replace</b> the entire contents of your main source file src/<i>&lt;project_name&gt;.c</i>
 				with the code below.
 			</p>
-
-			<pre><code class="C">#include "r_smc_entry.h"
+			<pre><code class="C">
+#include "hal.h"
 #include "da16200_AT.h"
-#include "http_server.h"
 #include "sensor.h"
-#include &ltstring.h&gt
+#include <string.h>
+#include <stdio.h>
+#include "st7735s.h"
+#include "text.h"
 
-static uint8_t http_ip_port[500];
+static const uint8_t COLOUR_BLACK[] = {0x00, 0x00};
+static const uint8_t COLOUR_WHITE[] = {0xFF, 0xFF};
+static ST7735S_display_area_info_t disp_info;
+
+static void mqtt_msg_send(void);
+static fsp_err_t try_read_mqtt_msg(void);
+static void demo_err(void);
+static void write_string_to_display(const char * const str);
+
 void main(void)
 {
-	http_receive_status http_status;
+	static fsp_err_t err;
+
 	EI();
-	wifi_init();
-	wifi_set();
-	Sensor_read();
+
+	/* Enable the UART*/
+	Hal_uart_start();
+
+	/* Initialise the sensor*/
+	Sensor_init();
+
+	/* Enable display SPI*/
+	R_Config_CSI00_Start_app();
+
+	/* Initialse display*/
+	St7735s_init(COLOUR_WHITE);
+	St7735s_get_display_area_info(&disp_info);
+	Text_init(disp_info.xmax, disp_info.ymax);
+	Text_set_font(&default_font);
+	St7735s_wake_display();
+	St7735s_display_on();
+	St7735s_refresh();
+	CCS6 = 0x02U; /* 5mA backlight*/
+
+	/* Connect MCU with Wi-Fi module and initialize Wi-Fi module */
+	write_string_to_display("Connecting\nDA16200...");
+	err = wifi_con_init();
+	if(FSP_SUCCESS != err)
+	{
+		demo_err();
+	}
+
+	write_string_to_display("Success!");
+	R_BSP_SoftwareDelay(500, BSP_DELAY_MILLISECS);
+
+	/* Configure Wi-Fi module to station mode and let it connect to AP */
+	write_string_to_display("Connecting\nWiFi...");
+	err = wifi_con_routine();
+	if(FSP_SUCCESS != err)
+	{
+		demo_err();
+	}
+
+	write_string_to_display("Success!");
+	R_BSP_SoftwareDelay(500, BSP_DELAY_MILLISECS);
+
+	/* Configure Wi-Fi module to MQTT client function */
+	write_string_to_display("Connecting\nMQTT...");
+	err = mqtt_con_routine();
+	if(FSP_SUCCESS != err)
+	{
+		demo_err();
+	}
+
+	write_string_to_display("Success!");
+	R_BSP_SoftwareDelay(500, BSP_DELAY_MILLISECS);
+
+	Sensor_read(); /* Dummy read to populate structs with data*/
+
 	while(1)
 	{
-		Sensor_read();
-		memset(http_ip_port, 0, 500);
-		http_status = HTTP_ERROR;
-		/* Wi-Fi server data receive */
-		http_status = http_server_receive(http_ip_port);
-		switch(http_status)
+		/* If we haven't received an LED toggle - send temperature and humidity update*/
+		if(FSP_SUCCESS != try_read_mqtt_msg())
 		{
-			/* HTTP GET command received */
-			case HTTP_GET:
-			http_update(http_ip_port);
-			break;
+			Sensor_read();
 
-			/* LED BLINK command received */
-			case HTTP_LED_BLINK:
-			CCS0 ^= 0x01U;
-			break;
-
-			/* HTTP OTHER command received */
-			case HTTP_OTHERS:
-			http_update(http_ip_port);
-			break;
-
-			default:
-			break;
+			mqtt_msg_send();
 		}
 	}
-}</code></pre>
+}
+
+static void mqtt_msg_send(void)
+{
+	static char temperature_value_str[10];
+	static char humidity_value_str[10];
+	static char mqtt_head[] = "AT+NWMQMSG=";
+	static float l_temperature = 0.00f;
+	static float l_humidity = 0.00f;
+	fsp_err_t err;
+
+	l_temperature = (float)Sensor_get_temp();
+	l_humidity = (float)Sensor_get_humidity();
+
+	sprintf(temperature_value_str, "%f", l_temperature);
+	sprintf(humidity_value_str, "%f", l_humidity);
+
+	g_da16200_cmd_set[DA16200_AT_CMD_INDEX_AT_NWMQMSG].p_cmd = (uint8_t *)mqtt_head;
+
+	part_array[0] = (uint32_t)temperature_value_str;
+	part_array[1] = (uint32_t)at_topic_t;
+	part_array[2] = (uint32_t)at_cmd_end;
+	At_cmd_combine(DA16200_AT_CMD_INDEX_AT_NWMQMSG, part_array, 3);
+	write_string_to_display("Sending...\nTemperature");
+	err = AT_cmd_send_ok(DA16200_AT_CMD_INDEX_AT_NWMQMSG);
+	if(FSP_SUCCESS != err)
+	{
+		write_string_to_display("Error!");
+		R_BSP_SoftwareDelay(500, BSP_DELAY_MILLISECS);
+	}
+
+	R_BSP_SoftwareDelay(100, BSP_DELAY_MILLISECS);
+
+	g_da16200_cmd_set[DA16200_AT_CMD_INDEX_AT_NWMQMSG].p_cmd = (uint8_t *)mqtt_head;
+
+	part_array[0] = (uint32_t)humidity_value_str;
+	part_array[1] = (uint32_t)at_topic_h;
+	part_array[2] = (uint32_t)at_cmd_end;
+	At_cmd_combine(DA16200_AT_CMD_INDEX_AT_NWMQMSG, part_array, 3);
+	write_string_to_display("Sending...\nHumidity");
+	err = AT_cmd_send_ok(DA16200_AT_CMD_INDEX_AT_NWMQMSG);
+	if(FSP_SUCCESS != err)
+	{
+		write_string_to_display("Error!");
+		R_BSP_SoftwareDelay(500, BSP_DELAY_MILLISECS);
+	}
+}
+/* END OF FUNCTION*/
+
+static fsp_err_t try_read_mqtt_msg(void)
+{
+	fsp_err_t status = FSP_ERR_ASSERTION;
+	uint16_t total_count = 0U;
+	static uint8_t mqtt_read_buf[512U] = {0U,};
+
+	memset(mqtt_read_buf, 0, 512);
+
+	write_string_to_display("MQTT Read...");
+
+	/* Start timeout timer*/
+	Hal_oneshot_start(4000U);
+
+	do
+	{
+		/* If bytes are available*/
+		if(Hal_uart_rx_ready())
+		{
+			/* Check if success response is present*/
+			total_count += Hal_uart_read((char *)&mqtt_read_buf[total_count]);
+			if(STRING_EXIST == is_str_present((const char *)mqtt_read_buf, "led_toggle,1"))
+			{
+				CCS0 ^= 0x01U; /* Toggle LED*/
+				write_string_to_display("Success!");
+				R_BSP_SoftwareDelay(500, BSP_DELAY_MILLISECS);
+				status = FSP_SUCCESS;
+			}
+			else if(STRING_EXIST == is_str_present((const char *)mqtt_read_buf, "buzzer,1"))
+			{
+				/* Enable Buzzer*/
+				R_Config_PCLBUZ1_Start();
+				write_string_to_display("Success!");
+				R_BSP_SoftwareDelay(500, BSP_DELAY_MILLISECS);
+				R_Config_PCLBUZ1_Stop();
+				status = FSP_SUCCESS;
+			}
+			else
+			{
+				/* Do Nothing*/
+			}
+		}
+		else if(Hal_oneshot_elapsed())
+		{
+			/* If oneshot has elpased - timeout occurred*/
+			write_string_to_display("No Data!");
+			R_BSP_SoftwareDelay(500, BSP_DELAY_MILLISECS);
+			status = FSP_ERR_TIMEOUT;
+		}
+		else
+		{
+			/* Do Nothing*/
+		}
+	}
+	while( (FSP_SUCCESS != status) && (FSP_ERR_TIMEOUT != status) );
+
+	return status;
+}
+/* END OF FUNCTION*/
+
+static void demo_err(void)
+{
+	write_string_to_display("Fatal Error!");
+
+	while(1)
+	{
+		/* Infinite Hang...*/
+	}
+}
+/* END OF FUNCTION*/
+
+static void write_string_to_display(const char * const str)
+{
+	static char prev_string[128] = {0,};
+	static uint16_t str_len = 0U;
+
+	/* remove old string if necessary*/
+	if(str_len > 0U)
+	{
+		(void)Text_put_str(20U, 20U, prev_string, COLOUR_WHITE, COLOUR_WHITE);
+	}
+
+	str_len = Text_put_str(20U, 20U, str, COLOUR_BLACK, COLOUR_WHITE);
+
+	St7735s_refresh();
+
+	(void)strcpy(prev_string, str);
+}
+`/* END OF FUNCTION*/
+</code></pre>
 		</details>
 
 		<details>
-			<summary>3.6 Application Explained <i>[Informative]</i></summary>
+			<summary>3.6 Link e2 studio project to adafruit</summary>
 			<p>
-				As the section name implies this in informative, there are no actions in this step and it can be freely
-				skipped. But this section aims to explain the application code and provide a clear understanding of why
-				&amp; how certain things have been done. We will do this by combing through the code, picking out
-				lines of code or groups of lines of code in order to dissect what is happening.<br><br>
-
-				The application codes in the folder looks like <br>
+				We should now have an e2 studio project and the adafruit dashboard ready. Now, let's link them. The first thing you need to know is the how to locate adafruit credentials. To get them go to your dashboard in adafruit and click on the button that has key drawn over it. Once clicked,it should opena dialog that show username and the Io key. You can locate this button as follows.
 			</p>
-			<img class="modal-thumbnails" src="img/img_lab/lab_layout.png" alt=""><br>
+			<img class="modal-thumbnails" src="img/img_lab/credentials.png" alt=""><br>
 			<p>
-				The folder has a following files and what it signifies<br>
-				<ol>
-					<li>
-						da16200_AT - All of the code involving AT commands to communicate with DA16200 to initiate Wifi or connect to a wifi connection.
-					</li>
-					<li>
-						http_server - This code has all the function involving the hosting of http server and the design of the html webpage that will be hosted. This the webpage where the sensor updates will be visible.
-					</li>
-					<li>
-						Sensor - These files entail the functions which initiates sensors and read the sensor values.
-					</li>
-				</ol>
-				The application is simple, the main loop infinitely waits for either of the following events.
-				<ol>
-					<li>
-						Refresh of the webpage at a schedules interval to make sure the sensor value is updated.
-					</li>
-					<li>
-						A user induced webpage get request i.e. user refreshes the webpage.
-					</li>
-					<li>
-						User clickes LED toggle button on the webpage to turn on/off LED.
-					</li>
-				</ol><br>
-				The main function which includes the main loop is explained below.
+				Since the credentials are acquired let's connect adafruit to e2 studio project. Locate the header file <b>{src}->{app}->{da16200_AT.h}</b> and enter the credential as follows:
 			</p>
-			<img class="modal-thumbnails" src="img/img_lab/main_loop.gif" alt=""><br>
-			<p>
-				The first part of the program is wifi initialization (wifi_init Function) which requires a sequence of AT
-				commands. AT commands are the medium of interraction for DA16200, and to initiate this AT command communication
-				we give a <b>ATZ</b>. Once AT commands are initiated, the user might wish to see what command was send before
-				the response is received to avoid confusion. This can be achieved using Echo mode. Echo mode would reflect/Echo
-				back the command that was sent by the user making sure the sequence shown is Command-Response-Command-Response....<br>
-				The wifi_init function and th AT commands used can be seen in the da16200_AT.c file as follows. To get to the function, you can ctrl+click on the
-				wifi_init function in the project main file.
-			</p>
-			<img class="modal-thumbnails" src="img/img_lab/Wifi_init.gif" alt=""><br>
-			<p>
-				The list of the AT commands used and the expected responses can be found in the start of the da16200_AT.c.
-				The main AT command of interest is WFSAP, a command used to setup Soft AP interface. A soft-AP needs
-				following arguments to set up.
-				<ol>
-					<li>
-						AP SSID: Name of the Wi-Fi
-					</li>
-					<li>
-						Security Protocol:
-						<ul>
-							<li>0 - open</li>
-							<li>2 - WPA</li>
-							<li>3 - WPA2</li>
-							<li>4 - WPA+WPA2</li>
-							<li>5 - WPA3 OWE</li>
-							<li>6 - WPA3 SAE</li>
-							<li>7 - WPA2 RSN &amp; WPA3 SAE</li>
-						</ul>
-					</li>
-					<li>
-						Encryption:
-						<ul>
-							<li>0 - TKIP</li>
-							<li>1 - AES</li>
-							<li>2 - TKIP+AES</li>
-						</ul>
-					</li>
-					<li>
-						Passphrase: Password for your Wi-Fi
-					</li>
-					<li>
-						Country code
-					</li>
-				</ol>
-				The AT commands in the file and the WFSAP used in the project looks as follows in the code.
-			</p>
-			<img class="modal-thumbnails" src="img/img_lab/Soft_AP_setup.gif" alt=""><br>
-			<p> The Soft-AP initialize and setup chain looks as follows</p>
-			<img style="max-width:90%;" src="img/img_lab/AT_command.png" alt=""><br>
-			<p>
-				Now moving to the sensor part of the project. This is the explaination of the code file sensor.c and the
-				sensor_read function which is used to get the sensor reading. The code is divided into two sections, the
-				first section is where the sensor is triggered to start measurements. The second section is initiated
-				after the successfull completion of the first section. This part reads the acquired measurement in a raw
-				format and then calculates a temperature and humdity value out of the raw sensor data.<br>
-				The code for executing this and it's stages are explained below.
-			</p>
-			<img class="modal-thumbnails" src="img/img_lab/sensor_read.gif" alt=""><br>
-			<p>
-				The final piece of the project is the webpage that is showing the sensor value graphically. This involves http_update
-				function from the code file http_server.c. The layout of the html page is described in the start of the code. The
-				http_update function gets the last read sensor value which then decides the colour of the graph depiciting the value.
-				Once all of the data is gathered in one string it is then attached to the html page. This update html page is then
-				uploaded for the user to view. <br> Note: the webpage will auto refresh every 10 seconds.<br>
-				The code for http update is as follows
-			</p>
-			<img class="modal-thumbnails" src="img/img_lab/http_server.gif" alt=""><br>
+			<ol>
+				<li>
+					<b>ADAFRUIT_USERNAME: </b> Username  from the credentials page.
+				</li>
+				<li>
+					<b>ADAFRUIT_AIO_KEY: </b> IO key  from the credentials page.
+				</li>
+				<li>
+					<b>WIFI_SSID: </b> Name of the wifi that da16200 should try to connect.
+				</li>
+				<li>
+					<b>WIFI_PASSWORD: </b> Password of the wifi that da16200 should try to connect.
+				</li>
+			</ol>
+			<p>This can be located in the header file as follows</p>
+			<img class="modal-thumbnails" src="img/img_lab/link_adafruit.png" alt=""><br>
 		</details>
 
 		<!-- Prepare the pages modal images-->
