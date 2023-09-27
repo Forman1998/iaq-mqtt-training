@@ -1,14 +1,6 @@
 /***********************************************************************************************************************
  * Copyright [2020-2021] Renesas Electronics Corporation and/or its affiliates.  All Rights Reserved.
- * #define ADAFRUIT_USERNAME	"Foram1998"
-#define ADAFRUIT_AIO_KEY	"aio_BTIC49rblux85ooLPmxCp0t3ZNGF"
-#if 0
-#define WIFI_SSID			"Android"
-#define WIFI_PASSWORD		"g9zq5q7i"
-#else
-
-#define WIFI_SSID			"RENESAS"
-#define WIFI_PASSWORD		"RENESAS2023"
+ * 
  * This software and documentation are supplied by Renesas Electronics America Inc. and may only be used with products
  * of Renesas Electronics Corp. and its affiliates ("Renesas").  No other uses are authorized.  Renesas products are
  * sold pursuant to Renesas terms and conditions of sale.  Purchasers are solely responsible for the selection and use
@@ -32,10 +24,10 @@
 #include "hal.h"
 
 /** Configuration Macros for connection*/
-#define ADAFRUIT_USERNAME	"Foram1998"
-#define ADAFRUIT_AIO_KEY	"aio_dvol18yZxAU08xshT49UlWBq4wt2"
-#define WIFI_SSID			"RENESAS"
-#define WIFI_PASSWORD		"RENESAS2023"
+#define ADAFRUIT_USERNAME	""
+#define ADAFRUIT_AIO_KEY	""
+#define WIFI_SSID			""
+#define WIFI_PASSWORD		""
 
 /** Macros to define string length */
 #define DA16200_STR_LEN_8        (8U)       ///< Length 8
