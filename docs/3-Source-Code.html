@@ -162,18 +162,18 @@ R_Config_TAU0_0_Stop();</code>
 		<details>
 			<summary>3.4 Populate TAU05 ISR</summary>
 			<p>
-				The sensor counter needs it's ISR populating - this ISR fires every milisecond to make sure the sensor reading is initiated after the sensor measurement is completed. We fill this ISR with some code so the
+				The sensor counter needs it's ISR populating - this ISR fires every millisecond to make sure the sensor reading is initiated after the sensor measurement is completed. We fill this ISR with some code so the
 				application functions properly.<br><br>
 				Now first we need to include our function in the header file.
 				Navigate to the <b>[src] &rarr; [smc_gen] &rarr; [Config_TAU0_5] &rarr; Config_TAU0_5.h</b> &amp;
 				copy the code below at the end of the file, inside the "Start user code for function..."
-				comment gaurd.
+				comment guard.
 			</p>
 			<pre><code class="C">void R_Config_TAU0_5_Blocking_Wait(void);</code></pre>
 			<p>
-				Next navigate to the corresponding <b>Config_TAU0_4_user.c</b> file ([src] &rarr; [smc_gen] &rarr;
+				Next navigate to the corresponding <b>Config_TAU0_5_user.c</b> file ([src] &rarr; [smc_gen] &rarr;
 				[Config_TAU0_5] &rarr; Config_TAU0_5_user.c) and please add the following code at the bottom of the file,
-				again within the comment gaurd "Start user code for adding...".
+				again within the comment guard "Start user code for adding...".
 			</p>
 			<pre><code class="C">void R_Config_TAU0_5_Blocking_Wait(void)
 {
