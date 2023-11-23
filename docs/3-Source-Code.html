@@ -201,7 +201,9 @@ R_Config_TAU0_0_Stop();</code>
 				comment gaurd.
 				<be>
 			</p>
-			<pre><code class="C">static volatile bool tx_done = true;</code></pre
+			<pre><code class="C">static volatile bool tx_done = true;
+static void Simple_polling_send(const uint8_t * const tx_buf, uint16_t tx_num);
+</code></pre
 			<p>
 				Now, let's edit callback function as follows:
 				<b>Function:r_Config_CSI00_callback_sendend</b>
