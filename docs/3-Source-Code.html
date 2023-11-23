@@ -132,13 +132,13 @@
 		<details>
 			<summary>3.3 Populate TAU00 ISR</summary>
 			<p>
-				The clockwise timer counter needs it's ISR populating - this ISR fires everytime timer runs out to make sure the UART connection with DA16200 functions timely. We fill this ISR with some code so the
-				application can be made aware of a clockwise rotation.<br><br>
+				The clockwise timer counter needs its ISR populating - this ISR fires every time timer runs out to make sure the UART connection with DA16200 functions timely. We fill this ISR with some code so the
+				the application can be made aware of a clockwise rotation.<br><br>
 				Now first we need to include our "main.h" file from earlier to enable the ISR to communicate with the
 				application.
 				Navigate to the <b>[src] &rarr; [smc_gen] &rarr; [Config_TAU0_0] &rarr; Config_TAU0_0_user.c</b> &amp;
 				copy the code below into the includes section of the file, inside the "Start user code for include..."
-				comment gaurd.
+				comment guard.
 			</p>
 			<pre><code class="C">#include "HAL.h"</code></pre>
 			<p>Then add the following the global variable declaration section</p>
@@ -149,7 +149,7 @@
 				Finally inside the r_Config_TAU0_0_interrupt isr, please place the following code. This code
 				signals to the application that the timer ran out. It also
 				clears the interrupt flags <b>both</b> timers as a debounce precaution. It should be
-				placed within the "Start user code for r_Config_TAU0_0_interrupt..." comment gaurd.
+				placed within the "Start user code for r_Config_TAU0_0_interrupt..." comment guard.
 			</p>
 			<pre>
 			<code class="C">oneshot_timer_done = true;
@@ -195,17 +195,23 @@ R_Config_TAU0_0_Stop();</code>
 		<details>
 			<summary>3.5 Populate SPI Driver</summary>
 			<p>
-				This is meant for display and to customise the SPI configuaration to work for the on board display.<br><br>
+				This is meant for display and to customise the SPI configuration to work for the onboard display.<br><be>
+				Let's first edit the header file to declare the functions we will be adding in this section. Locate the file at <b>[src] &rarr; [smc_gen] &rarr; [Config_CSI00] &rarr; Config_CSI00.h</b> &amp;
+				At the end of the file add the following :
+			</p>
+			<pre><code class="C">void R_Config_CSI00_Start_app(void);
+void R_Config_CSI00_Send_app(const uint8_t * const tx_buf, uint16_t tx_num);</code></pre>
+			<p>
 				Navigate to the <b>[src] &rarr; [smc_gen] &rarr; [Config_CSI00] &rarr; Config_CSI00_user.c</b> &amp;
 				Let's first declare the global variable and in order to do that copy the code, inside the "Start user code for global..."
-				comment gaurd.
+				comment guard.
 				<be>
 			</p>
 			<pre><code class="C">static volatile bool tx_done = true;
 static void Simple_polling_send(const uint8_t * const tx_buf, uint16_t tx_num);
-</code></pre
+</code></pre>
 			<p>
-				Now, let's edit callback function as follows:
+				Now, let's edit the callback function as follows:
 				<b>Function:r_Config_CSI00_callback_sendend</b>
 			</p>
 			<pre><code class="C">tx_done = true;</code></pre>
@@ -304,7 +310,36 @@ static void Simple_polling_send(const uint8_t * const tx_buf, uint16_t tx_num)
 			<img class="modal-thumbnails" src="img/img_lab/SPI_user_p2.png" alt="">
 		</details>
 		<details>
-			<summary>3.5 Pull In The Main Code</summary>
+			<summary>3.5 Edit the DTC Driver</summary>
+			<p>
+				Now, let's configure DTC and add a function to start DTC as per our requirement.<br><br>
+				We need to declare the function so navigate to <b>[src] &rarr; [smc_gen] &rarr; [Config_DTC] &rarr; Config_DTC.h</b><br>
+				You can edit the file in the section starting with the "Start user code for function..." comment guard - place the following
+				function declarations at the end of the file.
+				<pre>
+				<code class="C"> void Start_dtc1(__near const uint8_t * src, __near uint8_t * dst, uint16_t cnt);</code>
+				</pre>
+			</p>
+			<p>
+				Now let's add the function itself and to do that open <b>[src] &rarr; [smc_gen] &rarr; [Config_DTC] &rarr; Config_DTC.c</b><br>
+				Now add the following function at the end of the file.
+				<pre>
+				<code class="C">void Start_dtc1(__near const uint8_t * src, __near uint8_t * dst, uint16_t cnt)
+{
+	dtc_controldata_1.dtbls = 1U;
+	dtc_controldata_1.dtcct = (cnt > 255U) ? 0U : (uint8_t)cnt;
+	dtc_controldata_1.dtsar = (uint16_t)src;
+	dtc_controldata_1.dtdar = (uint16_t)dst;
+
+	R_DTCD1_Start();
+}</code>
+				</pre>
+			</p>
+			<p>Which should look like this:</p>
+			<img class="modal-thumbnails" src="img/img_lab/UART_User.png" alt="">
+		</details>
+		<details>
+			<summary>3.6 Pull In The Main Code</summary>
 			<p>
 				Now lets copy in the main code - this is running the application.<br>
 				Simply <b>replace</b> the entire contents of your main source file src/<i>&lt;project_name&gt;.c</i>
@@ -534,7 +569,7 @@ static void write_string_to_display(const char * const str)
 
 	(void)strcpy(prev_string, str);
 }
-`/* END OF FUNCTION*/
+/* END OF FUNCTION*/
 </code></pre>
 		</details>
 
