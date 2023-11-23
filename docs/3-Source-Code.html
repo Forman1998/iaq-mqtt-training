@@ -197,12 +197,16 @@ R_Config_TAU0_0_Stop();</code>
 			<p>
 				This is meant for display and to customise the SPI configuaration to work for the on board display.<br><br>
 				Navigate to the <b>[src] &rarr; [smc_gen] &rarr; [Config_CSI00] &rarr; Config_CSI00_user.c</b> &amp;
-				copy the code, inside the "Start user code for function..."
+				Let's first declare the global variable and in order to do that copy the code, inside the "Start user code for global..."
 				comment gaurd.
-				<br>
+				<be>
+			</p>
+			<pre><code class="C">static volatile bool tx_done = true;</code></pre
+			<p>
+				Now, let's edit callback function as follows:
 				<b>Function:r_Config_CSI00_callback_sendend</b>
 			</p>
-			<pre><code class="C">tx_done = true;</code></pre
+			<pre><code class="C">tx_done = true;</code></pre>
 			<p>This should look as follows</p>
 			<img class="modal-thumbnails" src="img/img_lab/SPI_user_p1.png" alt="">
 			<p>
